@@ -21,7 +21,25 @@ def serializeTemplates(templates):
 
 
 def serializeTemplate(template):
-    pass
+    if not template:
+        return template
+    d = dict(template)
+    print("template record after converting to dict:", d)
+    _convertDateTimeFromDict(d)
+    _cleanDict(d)
+    return d
+
+
+def serializeVersion(version):
+    if not version:
+        return version
+    verAsDict = dict(version)
+    _convertDateTimeFromDict(verAsDict)
+    _cleanDict(verAsDict)
+    return verAsDict
+
+def serializeVersions(versions):
+    return [serializeVersion(v) for v in versions]
 
 def _cleanDict(d):
     '''
@@ -40,9 +58,7 @@ def _convertDateTimeFromDict(d):
         update them in place with string equiv.
         If value is none, this key is removed
     '''
-    for timeKey in ["createdAt", "updatedAt", "deletedAt"]:
+    for timeKey in ["t_createdAt", "t_updatedAt", "t_deletedAt", "v_createdAt", "v_updatedAt", "v_deletedAt"]:
         if d.get(timeKey):
             print(d[timeKey], str(d[timeKey]))
             d.update({timeKey: str(d[timeKey])})
-        else:
-            del d[timeKey]

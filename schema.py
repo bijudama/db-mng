@@ -8,13 +8,13 @@ templates = sqlalchemy.Table(
     sqlalchemy.Column('name', sqlalchemy.CHAR(length=70), primary_key=True),
     sqlalchemy.Column('activeVersion', sqlalchemy.INT(), server_default=sqlalchemy.text('1')),
 
-    sqlalchemy.Column('createdAt', sqlalchemy.TIMESTAMP(), server_default=sqlalchemy.text('NOW()'), nullable=False),
-    sqlalchemy.Column('updatedAt', sqlalchemy.TIMESTAMP(), server_default=sqlalchemy.text('NOW()'), nullable=False),
-    sqlalchemy.Column('deletedAt', sqlalchemy.TIMESTAMP()),
+    sqlalchemy.Column('t_createdAt', sqlalchemy.TIMESTAMP(), server_default=sqlalchemy.text('NOW()'), nullable=False),
+    sqlalchemy.Column('t_updatedAt', sqlalchemy.TIMESTAMP(), server_default=sqlalchemy.text('NOW()'), nullable=False),
+    sqlalchemy.Column('t_deletedAt', sqlalchemy.TIMESTAMP()),
 
-    sqlalchemy.Column('createdBy', sqlalchemy.CHAR(length=30), nullable=False),
-    sqlalchemy.Column('updatedBy', sqlalchemy.CHAR(length=30), nullable=False),
-    sqlalchemy.Column('deletedBy', sqlalchemy.CHAR(length=30))
+    sqlalchemy.Column('t_createdBy', sqlalchemy.CHAR(length=30), nullable=False),
+    sqlalchemy.Column('t_updatedBy', sqlalchemy.CHAR(length=30), nullable=False),
+    sqlalchemy.Column('t_deletedBy', sqlalchemy.CHAR(length=30))
 )
 
 versions = sqlalchemy.Table(
@@ -29,30 +29,42 @@ versions = sqlalchemy.Table(
     sqlalchemy.Column('fromEmail', sqlalchemy.CHAR(length=320), nullable=False),
     sqlalchemy.Column('replyToEmail', sqlalchemy.CHAR(length=320), nullable=False),
 
-    sqlalchemy.Column('createdAt', sqlalchemy.TIMESTAMP(), server_default=sqlalchemy.text('NOW()'), nullable=False),
-    sqlalchemy.Column('updatedAt', sqlalchemy.TIMESTAMP(), server_default=sqlalchemy.text('NOW()'), nullable=False),
-    sqlalchemy.Column('deletedAt', sqlalchemy.TIMESTAMP()),
+    sqlalchemy.Column('v_createdAt', sqlalchemy.TIMESTAMP(), server_default=sqlalchemy.text('NOW()'), nullable=False),
+    sqlalchemy.Column('v_updatedAt', sqlalchemy.TIMESTAMP(), server_default=sqlalchemy.text('NOW()'), nullable=False),
+    sqlalchemy.Column('v_deletedAt', sqlalchemy.TIMESTAMP()),
 
-    sqlalchemy.Column('createdBy', sqlalchemy.CHAR(length=30), nullable=False),
-    sqlalchemy.Column('updatedBy', sqlalchemy.CHAR(length=30), nullable=False),
-    sqlalchemy.Column('deletedBy', sqlalchemy.CHAR(length=30))
+    sqlalchemy.Column('v_createdBy', sqlalchemy.CHAR(length=30), nullable=False),
+    sqlalchemy.Column('v_updatedBy', sqlalchemy.CHAR(length=30), nullable=False),
+    sqlalchemy.Column('v_deletedBy', sqlalchemy.CHAR(length=30))
 )
 
-def createSchema():
+def createSchema(insertFake = False):
     from config import Config
     engine = sqlalchemy.create_engine(Config.DB_URL)
     metadata.drop_all(engine)
     metadata.create_all(engine)
+    if insertFake:
+        conn = engine.connect()
+        temps = [
+            {'name': "temp1", 't_createdBy': "ammar1", 't_updatedBy': "ammar1"},
+            {'name': "temp2", 't_createdBy': "ammar2", 't_updatedBy': "ammar2"},
+            {'name': "temp3", 't_createdBy': "ammar3", 't_updatedBy': "ammar3"},
+            {'name': "temp4", 't_createdBy': "ammar4", 't_updatedBy': "ammar4"},
+            {'name': "temp5", 't_createdBy': "ammar5", 't_updatedBy': "ammar5"},
+        ]
+        conn.execute(templates.insert(), temps)
 
-def test():
-    from sqlalchemy import alias
-    sa = sqlalchemy
-    query = sa.select([alias(templates.c.createdAt, name="NewCreatedAt"), versions], sa.and_(templates.c.name == versions.c.templateName, templates.c.activeVersion == versions.c.number))
-    print(query.__str__())
-    
+        vers = [
+            {'templateName': "temp1", 'number': 1, 'v_createdBy': "AMMAR11", 'v_updatedBy': "AMMAR11", 'subject': "sub11", 'body': "bod11", 'fromEmail': "fe", 'replyToEmail': "reptoe"},
+            {'templateName': "temp1", 'number': 2, 'v_createdBy': "AMMAR12", 'v_updatedBy': "AMMAR12", 'subject': "sub12", 'body': "bod12", 'fromEmail': "fe", 'replyToEmail': "reptoe"},
+            {'templateName': "temp2", 'number': 1, 'v_createdBy': "AMMAR21", 'v_updatedBy': "AMMAR21", 'subject': "sub21", 'body': "bod21", 'fromEmail': "fe", 'replyToEmail': "reptoe"},
+            {'templateName': "temp3", 'number': 1, 'v_createdBy': "AMMAR31", 'v_updatedBy': "AMMAR31", 'subject': "sub31", 'body': "bod31", 'fromEmail': "fe", 'replyToEmail': "reptoe"},
+        ]
+
+        conn.execute(versions.insert(), vers)
+
 if __name__ == "__main__":
-    createSchema()
-    # test()
+    createSchema(insertFake=True)
 
 
 
