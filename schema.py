@@ -40,81 +40,21 @@ versions = sqlalchemy.Table(
 
 def createSchema(insertFake = False):
     from config import Config
+    from sql import registeredStoredProcedures
+    from sqlalchemy import text, func
     engine = sqlalchemy.create_engine(Config.DB_URL)
     metadata.drop_all(engine)
     metadata.create_all(engine)
+
+    conn = engine.connect()
+    for sp in registeredStoredProcedures:
+        conn.execute(sp)
     if insertFake:
-        conn = engine.connect()
-        temps = [
-            {'name': "temp1", 't_createdBy': "ammar1", 't_updatedBy': "ammar1"},
-            {'name': "temp2", 't_createdBy': "ammar2", 't_updatedBy': "ammar2"},
-            {'name': "temp3", 't_createdBy': "ammar3", 't_updatedBy': "ammar3"},
-            {'name': "temp4", 't_createdBy': "ammar4", 't_updatedBy': "ammar4"},
-            {'name': "temp5", 't_createdBy': "ammar5", 't_updatedBy': "ammar5"},
-        ]
-        conn.execute(templates.insert(), temps)
-
-        vers = [
-            {'templateName': "temp1", 'number': 1, 'v_createdBy': "AMMAR11", 'v_updatedBy': "AMMAR11", 'subject': "sub11", 'body': "bod11", 'fromEmail': "fe", 'replyToEmail': "reptoe"},
-            {'templateName': "temp1", 'number': 2, 'v_createdBy': "AMMAR12", 'v_updatedBy': "AMMAR12", 'subject': "sub12", 'body': "bod12", 'fromEmail': "fe", 'replyToEmail': "reptoe"},
-            {'templateName': "temp2", 'number': 1, 'v_createdBy': "AMMAR21", 'v_updatedBy': "AMMAR21", 'subject': "sub21", 'body': "bod21", 'fromEmail': "fe", 'replyToEmail': "reptoe"},
-            {'templateName': "temp3", 'number': 1, 'v_createdBy': "AMMAR31", 'v_updatedBy': "AMMAR31", 'subject': "sub31", 'body': "bod31", 'fromEmail': "fe", 'replyToEmail': "reptoe"},
-        ]
-
-        conn.execute(versions.insert(), vers)
+        from fakedata import faketemps, fakevers
+        for table, fakeEntries in zip((templates, versions), (faketemps, fakevers)):
+            conn.execute(table.insert(), fakeEntries)
+        conn.execute(func.insertVersion('temp1                                                                 ', 3, 'ammar2', 'ammar3', 'ammarr', 'ammar5', 'ammar6'))
+    conn.close()
 
 if __name__ == "__main__":
     createSchema(insertFake=True)
-
-
-
-
-
-# import psycopg2
-# con = psycopg2.connect(database="dynemailtemplates_1", user="postgres", password="159753", host="127.0.0.1", port="5432")
-# cursor = con.cursor()
-# createTemplateTable = '''CREATE TABLE Templates
-#       (Name         CHAR(70) PRIMARY KEY NOT NULL UNIQUE,
-
-#       Subject       TEXT            NOT NULL,
-#       Body          TEXT            NOT NULL,
-
-#       FromEmail          CHAR(320)       NOT NULL,
-#       ReplyToEmail       CHAR(320)       NOT NULL,
-
-#       ActiveVersion INT Default 1,
-
-#       CreatedAt    TIMESTAMP       NOT NULL DEFAULT now(),
-#       UpdatedAt    TIMESTAMP       NOT NULL DEFAULT now(),
-#       DeletedAt    TIMESTAMP,
-
-#       CreatedBy    CHAR(30),
-#       UpdatedBy    CHAR(30),
-#       DeletedBy    CHAR(30)
-#       );'''
-
-
-# createVersionTable = '''CREATE TABLE VERSIONS
-#       (Number         INT NOT NULL,
-#       TemplateName CHAR(70) NOT NULL,
-#       Subject       TEXT            NOT NULL,
-#       Body          TEXT            NOT NULL,
-
-#       FromEmail          CHAR(320)       NOT NULL,
-#       ReplyToEmail      CHAR(320)       NOT NULL,
-
-#       CreatedAt    TIMESTAMP       NOT NULL DEFAULT now(),
-#       UpdatedAt    TIMESTAMP       NOT NULL DEFAULT now(),
-#       DeletedAt    TIMESTAMP,
-
-#       CreatedBy    CHAR(30),
-#       UpdatedBy    CHAR(30),
-#       DeletedBy    CHAR(30),
-
-#       FOREIGN KEY (TemplateName) REFERENCES Templates(Name),
-#       PRIMARY KEY (Number, TemplateName)
-#     );'''
-# cursor.execute(createTemplateTable)
-# cursor.execute(createVersionTable)
-# con.commit()
-# print("committed")

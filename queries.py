@@ -1,6 +1,6 @@
 import sqlalchemy as sa
 from schema import templates, versions
-
+from sqlalchemy import func, text
 
 
 class AppQueries:
@@ -29,3 +29,39 @@ class AppQueries:
             versions.c.number == versionNumber,
             versions.c.templateName == templateName
         ))
+
+    def buildInsertTemplateQuery(payload):
+        try:
+            return AppQueries._psqlFunction("insertTemplate")(
+                payload['name'],
+                payload['createdBy'],
+                payload['subject'],
+                payload['body'],
+                payload['fromEmail'],
+                payload['replyToEmail'],
+            )
+        except KeyError as e:
+            raise KeyError(f"buildInsertTemplateQuery payload hasn't all keys required ({e})")
+
+    def buildInsertVersionQuery(payload):
+        try:
+            return AppQueries._psqlFunction("insertVersion")(
+                payload['name'],
+                payload['createdBy'],
+                payload['subject'],
+                payload['body'],
+                payload['fromEmail'],
+                payload['replyToEmail'],
+            )
+        except KeyError as e:
+            raise KeyError(f"buildInsertVersionQuery payload hasn't all keys required ({e})")
+
+    def setActiveVersion(templateName, number):
+        return AppQueries._psqlFunction("setActiveVersion")(templateName, number)
+
+    def _psqlFunction(functionName):
+        def call(*functionParams):
+            # quoteText = lambda text: f"'{text}'" if isinstance(text, str) else text
+            functionParams = list(map(repr, functionParams)) # repr will do the trick for quoting the string
+            return f"SELECT {functionName}({', '.join(functionParams)})"
+        return call
